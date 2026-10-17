@@ -58,12 +58,18 @@ if (!fs.existsSync(SRC)) {
 
 const code = fs.readFileSync(SRC, "utf8");
 
+// 换行归一化为 LF —— 保证产物跨平台可复现。
+// 上游仓库在 Windows 检出时是 CRLF、Linux 检出时是 LF；若直接透传，
+// 同一份上游在两端构建出的产物换行不同，CI 的「构建一致性」检查必然误报。
+// （`.gitattributes` 也约定仓库内统一存 LF，这里保持产物与之一致。）
+const normalizeEol = (s) => s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
 const metaStart = code.indexOf("// ==UserScript==");
 const metaEnd = code.indexOf("// ==/UserScript==");
 if (metaStart === -1 || metaEnd === -1) die("未找到 UserScript 元数据块，上游格式可能已变化。");
 
-const metaBlock = code.slice(metaStart, metaEnd);
-let body = code.slice(metaEnd + "// ==/UserScript==".length).replace(/^\s*\n/, "");
+const metaBlock = normalizeEol(code.slice(metaStart, metaEnd));
+let body = normalizeEol(code.slice(metaEnd + "// ==/UserScript==".length)).replace(/^\s*\n/, "");
 
 /** 从元数据块收集某指令的所有值 */
 function metaValues(directive) {
