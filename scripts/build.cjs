@@ -167,8 +167,9 @@ function wrapMainEntry(src) {
 	return (
 		"// ===== 由 build.cjs 生成，请勿手工编辑 =====\n" +
 		"// 上游：https://github.com/hmjz100/LinkSwift\n" +
-		"// 版本：" + version + "\n" +
-		"// 生成时间：" + new Date().toISOString() + "\n" +
+		"// 上游版本：" + version + "\n" +
+		// 刻意不写构建时间戳：产物必须可复现（同输入 → 同输出），
+		// 否则 CI 的「构建一致性」检查永远失败，也无法审计产物来源。
 		"(function () {\n" +
 		'"use strict";\n' +
 		"window.__linkSwiftMain = function () {\n" +

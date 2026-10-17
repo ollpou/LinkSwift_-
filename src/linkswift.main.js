@@ -1,7 +1,6 @@
 // ===== 由 build.cjs 生成，请勿手工编辑 =====
 // 上游：https://github.com/hmjz100/LinkSwift
-// 版本：1.1.4
-// 生成时间：2026-10-17T07:43:04.909Z
+// 上游版本：1.1.4
 (function () {
 "use strict";
 window.__linkSwiftMain = function () {

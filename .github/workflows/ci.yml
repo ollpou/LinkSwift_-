@@ -1,0 +1,130 @@
+name: CI
+
+# 触发条件：
+#   - push 到 main
+#   - 向 main 提 PR
+#   - 手动触发
+#   - 每周一 03:00 (UTC) 定时跑一次：验证「上游更新后构建是否还能跟上」
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+# 同一分支的并发任务自动取消旧的，省额度
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ====================================================================
+  # 1. 静态验证：manifest 合规 / 权限交叉检查 / 双 world 端到端 / 版本一致性
+  # ====================================================================
+  verify:
+    name: 静态验证 (verify.cjs)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出本仓库
+        uses: actions/checkout@v4
+
+      - name: 检出上游 LinkSwift（verify 需要它做版本一致性检查）
+        uses: actions/checkout@v4
+        with:
+          repository: hmjz100/LinkSwift
+          ref: dev
+          path: LinkSwift
+          sparse-checkout: |
+            /*.user.js
+          sparse-checkout-cone-mode: false
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 运行静态验证
+        run: node scripts/verify.cjs
+
+  # ====================================================================
+  # 2. 构建一致性：从上游重新构建，产物必须与仓库内的完全一致
+  #    防止「改了源码但忘了跑 build.cjs」或「手改了生成产物」
+  # ====================================================================
+  build-consistency:
+    name: 构建一致性 (build.cjs)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出本仓库
+        uses: actions/checkout@v4
+
+      - name: 检出上游 LinkSwift（build 需要完整仓库）
+        uses: actions/checkout@v4
+        with:
+          repository: hmjz100/LinkSwift
+          ref: dev
+          path: LinkSwift
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 下载第三方依赖（含 sweetalert2 head 时序补丁）
+        run: node scripts/fetch-vendor.cjs
+
+      - name: 生成图标
+        run: node scripts/gen-icons.cjs
+
+      - name: 运行构建
+        run: node scripts/build.cjs
+
+      - name: 检查产物与仓库一致
+        run: |
+          echo "=== 检查工作区是否有未提交的构建改动 ==="
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::构建产物与仓库不一致——请本地运行 node scripts/build.cjs 并提交"
+            git status --porcelain
+            git --no-pager diff --stat
+            exit 1
+          fi
+          echo "✓ 构建产物与仓库完全一致"
+
+      - name: 检查构建幂等性
+        run: |
+          echo "=== 连跑两次构建，产物应完全相同 ==="
+          md5sum src/linkswift.main.js src/meta.js src/gm-shim.js manifest.json > /tmp/build1.txt
+          node scripts/build.cjs
+          md5sum src/linkswift.main.js src/meta.js src/gm-shim.js manifest.json > /tmp/build2.txt
+          if ! diff -u /tmp/build1.txt /tmp/build2.txt; then
+            echo "::error::build.cjs 不是幂等的——第二次构建改变了产物"
+            exit 1
+          fi
+          echo "✓ 构建幂等"
+
+  # ====================================================================
+  # 3. 打包：生成可加载的 zip 并上传为 artifact
+  # ====================================================================
+  package:
+    name: 打包 zip
+    runs-on: ubuntu-latest
+    needs: [verify]
+    steps:
+      - name: 检出本仓库
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 打包
+        run: node scripts/pack.cjs
+
+      - name: 上传 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LinkSwift-Chrome-zip
+          path: dist/*.zip
+          retention-days: 30

@@ -128,14 +128,28 @@ check("manifest 引用的文件全部存在", missingFiles.length === 0, missing
  * ==================================================================== */
 
 console.log("\n--- 2. 版本一致性 ---");
-const upstreamCode = fs.readFileSync(UPSTREAM, "utf8");
-const upstreamVersion = (upstreamCode.match(/\/\/\s*@version\s+(\S+)/) || [])[1];
+// 上游仓库是可选的：CI 里会先 clone 到同级目录；本地没有上游时跳过该组检查
+// （其余 40+ 项不依赖上游，仍会照常执行）。
+const hasUpstream = fs.existsSync(UPSTREAM);
+if (!hasUpstream) {
+	console.log(`  SKIP：未找到上游脚本（${UPSTREAM}）`);
+	console.log("        版本一致性检查需要上游仓库；CI 会先 clone 上游再跑。");
+}
+const upstreamCode = hasUpstream ? fs.readFileSync(UPSTREAM, "utf8") : "";
+const upstreamVersion = hasUpstream
+	? (upstreamCode.match(/\/\/\s*@version\s+(\S+)/) || [])[1]
+	: null;
 const metaCode = fs.readFileSync(path.join(ROOT, "src", "meta.js"), "utf8");
 const metaVersion = (metaCode.match(/"version":\s*"([^"]+)"/) || [])[1];
 
-check("上游 @version 存在", !!upstreamVersion, upstreamVersion || "未找到");
-check("meta.js 版本 === 上游版本", metaVersion === upstreamVersion, `${metaVersion} vs ${upstreamVersion}`);
-check("manifest 版本 === 上游版本", manifest.version === upstreamVersion, `${manifest.version} vs ${upstreamVersion}`);
+if (hasUpstream) {
+	check("上游 @version 存在", !!upstreamVersion, upstreamVersion || "未找到");
+	check("meta.js 版本 === 上游版本", metaVersion === upstreamVersion, `${metaVersion} vs ${upstreamVersion}`);
+	check("manifest 版本 === 上游版本", manifest.version === upstreamVersion, `${manifest.version} vs ${upstreamVersion}`);
+} else {
+	// 至少保证 meta 与 manifest 自洽
+	check("meta.js 版本 === manifest 版本", metaVersion === manifest.version, `${metaVersion} vs ${manifest.version}`);
+}
 
 /* ==================================================================== *
  * 3. 主脚本产物检查（Swal/md5 替换、补丁、包装）
