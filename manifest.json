@@ -1,0 +1,170 @@
+{
+  "manifest_version": 3,
+  "name": "LinkSwift - 网盘直链下载助手",
+  "short_name": "LinkSwift",
+  "version": "1.1.4",
+  "description": "一个基于 JavaScript 的网盘文件下载地址获取工具，支持百度网盘 / 阿里云盘 / 中国移动云盘 / 天翼云盘 / 迅雷云盘 / 光鸭云盘 / 夸克网盘 / UC网盘 / 123云盘 九大网盘。",
+  "minimum_chrome_version": "111",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "LinkSwift",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "clipboardWrite",
+    "contextMenus",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://pan.baidu.com/disk/home*",
+        "*://yun.baidu.com/disk/home*",
+        "*://pan.baidu.com/disk/timeline*",
+        "*://yun.baidu.com/disk/timeline*",
+        "*://pan.baidu.com/disk/main*",
+        "*://yun.baidu.com/disk/main*",
+        "*://pan.baidu.com/youth/pan/main*",
+        "*://yun.baidu.com/youth/pan/main*",
+        "*://pan.baidu.com/disk/base*",
+        "*://yun.baidu.com/disk/base*",
+        "*://pan.baidu.com/pfile/*",
+        "*://yun.baidu.com/pfile/*",
+        "*://pan.baidu.com/s/*",
+        "*://pan.baidu.com/aipan/*",
+        "*://yun.baidu.com/s/*",
+        "*://yun.baidu.com/aipan/*",
+        "*://pan.baidu.com/share/*",
+        "*://yun.baidu.com/share/*",
+        "*://pan.baidu.com/embed/*",
+        "*://yun.baidu.com/embed/*",
+        "*://openapi.baidu.com/*",
+        "*://www.aliyundrive.com/s/*",
+        "*://www.aliyundrive.com/drive*",
+        "*://www.alipan.com/s/*",
+        "*://www.alipan.com/drive*",
+        "*://yun.139.com/*",
+        "*://caiyun.139.com/*",
+        "*://cloud.189.cn/web/*",
+        "*://pan.xunlei.com/*",
+        "*://www.guangyapan.com/*",
+        "*://pan.quark.cn/*",
+        "*://drive.uc.cn/*",
+        "*://*.123pan.com/*",
+        "*://*.123pan.cn/*",
+        "*://*.123684.com/*",
+        "*://*.123865.com/*",
+        "*://*.123952.com/*",
+        "*://*.123912.com/*"
+      ],
+      "match_origin_as_fallback": false,
+      "js": [
+        "src/meta.js",
+        "src/bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "*://pan.baidu.com/disk/home*",
+        "*://yun.baidu.com/disk/home*",
+        "*://pan.baidu.com/disk/timeline*",
+        "*://yun.baidu.com/disk/timeline*",
+        "*://pan.baidu.com/disk/main*",
+        "*://yun.baidu.com/disk/main*",
+        "*://pan.baidu.com/youth/pan/main*",
+        "*://yun.baidu.com/youth/pan/main*",
+        "*://pan.baidu.com/disk/base*",
+        "*://yun.baidu.com/disk/base*",
+        "*://pan.baidu.com/pfile/*",
+        "*://yun.baidu.com/pfile/*",
+        "*://pan.baidu.com/s/*",
+        "*://pan.baidu.com/aipan/*",
+        "*://yun.baidu.com/s/*",
+        "*://yun.baidu.com/aipan/*",
+        "*://pan.baidu.com/share/*",
+        "*://yun.baidu.com/share/*",
+        "*://pan.baidu.com/embed/*",
+        "*://yun.baidu.com/embed/*",
+        "*://openapi.baidu.com/*",
+        "*://www.aliyundrive.com/s/*",
+        "*://www.aliyundrive.com/drive*",
+        "*://www.alipan.com/s/*",
+        "*://www.alipan.com/drive*",
+        "*://yun.139.com/*",
+        "*://caiyun.139.com/*",
+        "*://cloud.189.cn/web/*",
+        "*://pan.xunlei.com/*",
+        "*://www.guangyapan.com/*",
+        "*://pan.quark.cn/*",
+        "*://drive.uc.cn/*",
+        "*://*.123pan.com/*",
+        "*://*.123pan.cn/*",
+        "*://*.123684.com/*",
+        "*://*.123865.com/*",
+        "*://*.123952.com/*",
+        "*://*.123912.com/*"
+      ],
+      "js": [
+        "vendor/jquery.min.js",
+        "vendor/sweetalert2.min.js",
+        "vendor/md5.min.js",
+        "src/prelude.js",
+        "src/gm-shim.js",
+        "src/linkswift.main.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "vendor/*.css",
+        "icons/*.png"
+      ],
+      "matches": [
+        "*://pan.baidu.com/*",
+        "*://yun.baidu.com/*",
+        "*://openapi.baidu.com/*",
+        "*://www.aliyundrive.com/*",
+        "*://www.alipan.com/*",
+        "*://yun.139.com/*",
+        "*://caiyun.139.com/*",
+        "*://cloud.189.cn/*",
+        "*://pan.xunlei.com/*",
+        "*://www.guangyapan.com/*",
+        "*://pan.quark.cn/*",
+        "*://drive.uc.cn/*",
+        "*://*.123pan.com/*",
+        "*://*.123pan.cn/*",
+        "*://*.123684.com/*",
+        "*://*.123865.com/*",
+        "*://*.123952.com/*",
+        "*://*.123912.com/*"
+      ]
+    }
+  ]
+}
