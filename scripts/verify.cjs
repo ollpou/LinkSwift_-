@@ -17,7 +17,11 @@ const path = require("path");
 const vm = require("vm");
 
 const ROOT = path.resolve(__dirname, "..");
-const UPSTREAM = path.resolve(ROOT, "..", "LinkSwift", "（改）网盘直链下载助手.user.js");
+// 上游 userscript 路径：默认找同级目录的 LinkSwift 仓库；
+// CI 里 clone 到仓库内的 LinkSwift/ 子目录，用 LINK_SWIFT_UPSTREAM 覆盖。
+const UPSTREAM = process.env.LINK_SWIFT_UPSTREAM
+	? path.resolve(process.env.LINK_SWIFT_UPSTREAM)
+	: path.resolve(ROOT, "..", "LinkSwift", "（改）网盘直链下载助手.user.js");
 
 const results = [];
 function check(name, pass, detail) {

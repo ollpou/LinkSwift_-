@@ -30,6 +30,8 @@ jobs:
       - name: 检出本仓库
         uses: actions/checkout@v4
 
+      # 注意：clone 到仓库内 LinkSwift/ 子目录，并让 verify.cjs 用
+      # LINK_SWIFT_UPSTREAM 环境变量指向它（默认找 ../LinkSwift）。
       - name: 检出上游 LinkSwift（verify 需要它做版本一致性检查）
         uses: actions/checkout@v4
         with:
@@ -47,6 +49,8 @@ jobs:
 
       - name: 运行静态验证
         run: node scripts/verify.cjs
+        env:
+          LINK_SWIFT_UPSTREAM: ${{ github.workspace }}/LinkSwift/（改）网盘直链下载助手.user.js
 
   # ====================================================================
   # 2. 构建一致性：从上游重新构建，产物必须与仓库内的完全一致
@@ -59,6 +63,9 @@ jobs:
       - name: 检出本仓库
         uses: actions/checkout@v4
 
+      # 注意：actions/checkout 的 path 必须落在工作区内，所以这里 clone 到
+      # 仓库内的 LinkSwift/ 子目录，再用 --src 显式指定上游路径
+      # （build.cjs 支持 --src，默认找 ../LinkSwift）。
       - name: 检出上游 LinkSwift（build 需要完整仓库）
         uses: actions/checkout@v4
         with:
@@ -78,15 +85,16 @@ jobs:
         run: node scripts/gen-icons.cjs
 
       - name: 运行构建
-        run: node scripts/build.cjs
+        run: node scripts/build.cjs --src LinkSwift/（改）网盘直链下载助手.user.js
 
       - name: 检查产物与仓库一致
         run: |
           echo "=== 检查工作区是否有未提交的构建改动 ==="
-          if [ -n "$(git status --porcelain)" ]; then
+          # 上游仓库目录本身不算构建改动，排除掉
+          if [ -n "$(git status --porcelain -- . ':!LinkSwift')" ]; then
             echo "::error::构建产物与仓库不一致——请本地运行 node scripts/build.cjs 并提交"
-            git status --porcelain
-            git --no-pager diff --stat
+            git status --porcelain -- . ':!LinkSwift'
+            git --no-pager diff --stat -- . ':!LinkSwift'
             exit 1
           fi
           echo "✓ 构建产物与仓库完全一致"
@@ -95,7 +103,7 @@ jobs:
         run: |
           echo "=== 连跑两次构建，产物应完全相同 ==="
           md5sum src/linkswift.main.js src/meta.js src/gm-shim.js manifest.json > /tmp/build1.txt
-          node scripts/build.cjs
+          node scripts/build.cjs --src LinkSwift/（改）网盘直链下载助手.user.js
           md5sum src/linkswift.main.js src/meta.js src/gm-shim.js manifest.json > /tmp/build2.txt
           if ! diff -u /tmp/build1.txt /tmp/build2.txt; then
             echo "::error::build.cjs 不是幂等的——第二次构建改变了产物"
