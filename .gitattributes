@@ -1,0 +1,39 @@
+# 统一换行处理，保证跨平台构建产物可比对
+#
+# 背景：CI 的「构建一致性」检查用 `git status --porcelain` 判断
+# 「重新构建后产物是否与仓库一致」。若换行处理不一致（Windows 检出 CRLF、
+# Linux 构建输出 LF），该检查会因纯换行差异误报失败。
+#
+# 策略：
+#   - 所有文本文件在仓库内统一存 LF（text=auto eol=lf）
+#   - 二进制文件（png/zip）显式标记，避免被当文本转换
+#   - 生成产物（src/linkswift.main.js 等）也按 LF 存储，与 build.cjs 输出一致
+
+* text=auto eol=lf
+
+# 二进制：不做任何换行/编码转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.crx binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+
+# 第三方压缩库：保持原样（minified，不能改换行）
+vendor/*.min.js binary
+vendor/*.min.css binary
+
+# 文档与脚本：显式 LF
+*.md text eol=lf
+*.js text eol=lf
+*.cjs text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.css text eol=lf
+*.html text eol=lf
